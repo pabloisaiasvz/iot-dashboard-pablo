@@ -169,10 +169,16 @@ export default function Dashboard() {
   });
 
   // Latest reading per casa
-  const latestPerCasa = Object.entries(casas).map(([id, readings]) => ({
-    id,
-    ...readings[0],
-  }));
+const latestPerCasa = Object.entries(casas)
+    .map(([id, readings]) => ({
+      id,
+      ...readings[0],
+    }))
+    .sort((a, b) => {
+      const nombreA = a.nombre || "";
+      const nombreB = b.nombre || "";
+      return nombreA.localeCompare(nombreB);
+    });
 
   // Selected casa data
   const selCasa = selected
@@ -272,11 +278,17 @@ return (
                   onClick={() => setSelected(casa.id)}
                 >
                   <div className="casa-row-header">
-                    <span className="casa-id">{casa.id}</span>
-                    {hasAlert && <span className="alert-dot" />}
-                    {casa.evento_red && <span className="event-icon">⚡</span>}
+                    <span className="casa-id" style={{ fontSize: 11, color: isActive ? "var(--color-info)" : "var(--text-primary)" }}>
+                      {casa.nombre}
+                    </span>
+                    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                      {hasAlert && <span className="alert-dot" />}
+                      {casa.evento_red && <span className="event-icon">⚡</span>}
+                    </div>
                   </div>
-                  <div className="casa-name">{casa.nombre}</div>
+                  <div className="casa-name" style={{ fontSize: 9, color: "var(--text-muted)" }}>
+                    {casa.id}
+                  </div>
                   <div className="casa-consumo">
                     {m2.consumo_w ? `${m2.consumo_w.toFixed(0)} W` : "—"}
                   </div>
@@ -406,34 +418,37 @@ return (
               <table className="telemetry-table">
                 <thead>
                   <tr>
-                    {["TIMESTAMP", "CASA", "TENSIÓN V", "CONSUMO W", "CORRIENTE A", "F.P.", "FREQ Hz", "ESTADO"].map(h => (
+                    {["TIMESTAMP", "DISPOSITIVO", "TENSIÓN V", "CONSUMO W", "CORRIENTE A", "F.P.", "FREQ Hz", "ESTADO"].map(h => (
                       <th key={h}>{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody>
-                  {docs.slice(0, 12).map((d) => {
-                    const m2 = d.medicion || {};
-                    const hasAlert = m2.tension_v < 195 || m2.tension_v > 245 || m2.consumo_w > 4500 || m2.factor_potencia < 0.75;
-                    return (
-                      <tr key={d.id} className="telemetry-row">
-                        <td style={{ color: "var(--text-secondary)" }}>{fmtDateTime(d.timestamp)}</td>
-                        <td style={{ color: "var(--color-info)" }}>{d.casa_id}</td>
-                        <td style={{ color: m2.tension_v < 195 || m2.tension_v > 245 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.tension_v?.toFixed(1)}</td>
-                        <td style={{ color: m2.consumo_w > 4500 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.consumo_w?.toFixed(0)}</td>
-                        <td style={{ color: "var(--text-primary)" }}>{m2.corriente_a?.toFixed(2)}</td>
-                        <td style={{ color: m2.factor_potencia < 0.75 ? "var(--color-danger)" : "var(--color-success)" }}>{m2.factor_potencia?.toFixed(3)}</td>
-                        <td style={{ color: m2.frecuencia_hz < 48.5 || m2.frecuencia_hz > 51.5 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.frecuencia_hz?.toFixed(2)}</td>
-                        <td>
-                          {hasAlert
-                            ? <span style={{ color: "var(--color-danger)", fontSize: 9 }}>⚠ ALERTA</span>
-                            : <span style={{ color: "var(--color-success)", fontSize: 9 }}>● NORMAL</span>}
-                          {d.evento_red && <span style={{ color: "var(--color-warning)", fontSize: 9, marginLeft: 6 }}>⚡{d.evento_red}</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
+                  <tbody>
+                    {docs
+                      .filter((d) => selCasa && d.casa_id === selCasa.casa_id)
+                      .slice(0, 12)
+                      .map((d) => {
+                        const m2 = d.medicion || {};
+                        const hasAlert = m2.tension_v < 195 || m2.tension_v > 245 || m2.consumo_w > 4500 || m2.factor_potencia < 0.75;
+                        return (
+                          <tr key={d.id} className="telemetry-row">
+                            <td style={{ color: "var(--text-secondary)" }}>{fmtDateTime(d.timestamp)}</td>
+                            <td style={{ color: "var(--color-info)", fontWeight: 600 }}>{d.nombre}</td>
+                            <td style={{ color: m2.tension_v < 195 || m2.tension_v > 245 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.tension_v?.toFixed(1)}</td>
+                            <td style={{ color: m2.consumo_w > 4500 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.consumo_w?.toFixed(0)}</td>
+                            <td style={{ color: "var(--text-primary)" }}>{m2.corriente_a?.toFixed(2)}</td>
+                            <td style={{ color: m2.factor_potencia < 0.75 ? "var(--color-danger)" : "var(--color-success)" }}>{m2.factor_potencia?.toFixed(3)}</td>
+                            <td style={{ color: m2.frecuencia_hz < 48.5 || m2.frecuencia_hz > 51.5 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.frecuencia_hz?.toFixed(2)}</td>
+                            <td>
+                              {hasAlert
+                                ? <span style={{ color: "var(--color-danger)", fontSize: 9 }}>⚠ ALERTA</span>
+                                : <span style={{ color: "var(--color-success)", fontSize: 9 }}>● NORMAL</span>}
+                              {d.evento_red && <span style={{ color: "var(--color-warning)", fontSize: 9, marginLeft: 6 }}>⚡{d.evento_red}</span>}
+                            </td>
+                          </tr>
+                        );
+                    })}
+                  </tbody>
               </table>
             </div>
           </div>
