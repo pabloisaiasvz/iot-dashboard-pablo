@@ -127,7 +127,7 @@ function AlertBadge({ type, severity }) {
 // ── Main Dashboard ─────────────────────────────────────────────
 export default function Dashboard() {
   const [docs, setDocs] = useState([]);
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState("CASA_01");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [tick, setTick] = useState(0);
@@ -168,23 +168,21 @@ export default function Dashboard() {
     casas[d.casa_id].push(d);
   });
 
-  // Latest reading per casa
-const latestPerCasa = Object.entries(casas)
+  const latestPerCasa = Object.entries(casas)
     .map(([id, readings]) => ({
-      id,
       ...readings[0],
     }))
     .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
 
-  // --- NUEVA LÓGICA DE ESTABILIDAD ---
   useEffect(() => {
     if (!selected && latestPerCasa.length > 0) {
-      setSelected(latestPerCasa[0].id);
+      setSelected(latestPerCasa[0].casa_id); 
     }
   }, [latestPerCasa, selected]);
 
-  const selCasa = latestPerCasa.find(c => c.id === selected) || latestPerCasa[0];
-  const selHistory = (casas[selected || latestPerCasa[0]?.id] || []).slice(0, 30).reverse();
+  const selCasa = latestPerCasa.find(c => c.casa_id === selected) || latestPerCasa[0];
+  
+  const selHistory = (casas[selected || latestPerCasa[0]?.casa_id] || []).slice(0, 30).reverse();
 
 
   const chartData = selHistory.map(d => ({
