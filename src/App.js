@@ -239,7 +239,7 @@ return (
         <div className="header-stats">
           <div className="stats-group">
             {[
-              { label: "CASAS", value: latestPerCasa.length, color: "var(--color-info)" },
+              { label: "DISPOSITIVOS", value: latestPerCasa.length, color: "var(--color-info)" },
               { label: "CONSUMO TOTAL", value: `${(totalConsumo / 1000).toFixed(1)} kW`, color: "var(--color-warning)" },
               { label: "ALERTAS", value: alertCount, color: alertCount > 0 ? "var(--color-danger)" : "var(--color-success)" },
             ].map(s => (
