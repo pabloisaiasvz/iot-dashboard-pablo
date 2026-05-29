@@ -174,20 +174,18 @@ const latestPerCasa = Object.entries(casas)
       id,
       ...readings[0],
     }))
-    .sort((a, b) => {
-      const nombreA = a.nombre || "";
-      const nombreB = b.nombre || "";
-      return nombreA.localeCompare(nombreB);
-    });
+    .sort((a, b) => (a.nombre || "").localeCompare(b.nombre || ""));
 
-  // Selected casa data
-  const selCasa = selected
-    ? latestPerCasa.find(c => c.id === selected)
-    : latestPerCasa[0];
+  // --- NUEVA LÓGICA DE ESTABILIDAD ---
+  useEffect(() => {
+    if (!selected && latestPerCasa.length > 0) {
+      setSelected(latestPerCasa[0].id);
+    }
+  }, [latestPerCasa, selected]);
 
-  const selHistory = selected
-    ? (casas[selected] || []).slice(0, 30).reverse()
-    : (casas[latestPerCasa[0]?.id] || []).slice(0, 30).reverse();
+  const selCasa = latestPerCasa.find(c => c.id === selected) || latestPerCasa[0];
+  const selHistory = (casas[selected || latestPerCasa[0]?.id] || []).slice(0, 30).reverse();
+
 
   const chartData = selHistory.map(d => ({
     t: fmtTime(d.timestamp),
@@ -196,6 +194,8 @@ const latestPerCasa = Object.entries(casas)
     fp: d.medicion?.factor_potencia ? d.medicion.factor_potencia * 100 : null,
     frecuencia: d.medicion?.frecuencia_hz,
   }));
+
+  console.log("DEBUG: chartData actual:", chartData);
 
   // Global stats
   const allLatest = latestPerCasa.map(c => c.medicion).filter(Boolean);
@@ -275,7 +275,7 @@ return (
                 <div
                   key={casa.id}
                   className={`casa-row ${isActive ? "active" : ""}`}
-                  onClick={() => setSelected(casa.id)}
+                  onClick={() => setSelected(casa.casa_id)}
                 >
                   <div className="casa-row-header">
                     <span className="casa-id" style={{ fontSize: 11, color: isActive ? "var(--color-info)" : "var(--text-primary)" }}>
@@ -433,7 +433,7 @@ return (
                         return (
                           <tr key={d.id} className="telemetry-row">
                             <td style={{ color: "var(--text-secondary)" }}>{fmtDateTime(d.timestamp)}</td>
-                            <td style={{ color: "var(--color-info)", fontWeight: 600 }}>{d.nombre}</td>
+                            <td style={{ color: "var(--color-info)",}}>{d.nombre}</td>
                             <td style={{ color: m2.tension_v < 195 || m2.tension_v > 245 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.tension_v?.toFixed(1)}</td>
                             <td style={{ color: m2.consumo_w > 4500 ? "var(--color-danger)" : "var(--text-primary)" }}>{m2.consumo_w?.toFixed(0)}</td>
                             <td style={{ color: "var(--text-primary)" }}>{m2.corriente_a?.toFixed(2)}</td>
