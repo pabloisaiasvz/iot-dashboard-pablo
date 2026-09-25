@@ -1,3 +1,56 @@
+# IoT Energy Monitor — Dashboard
+
+Dashboard en React que lee de Firestore en tiempo real los datos que guarda el
+puente `subscriber_firebase.py` (repo `IoT-simulator`).
+
+## Funcionalidades
+
+- **En vivo:** gauges, métricas y gráficos del dispositivo seleccionado.
+- **Estado online / retrasado / offline** por dispositivo, según cuánto hace que no llegan datos
+  (`max(3 × intervalo, 15 s)`, o los valores que publique el puente en `sistema/puente`).
+  Los dispositivos que dejan de reportar siguen en la lista gracias a la colección `dispositivos`.
+- **Latencia** por etapa (cola del dispositivo, red MQTT, escritura en Firestore, entrega al
+  navegador), promedio / p95 / máximo, y RTT del puente al broker.
+- **Notificaciones:** campana con centro de notificaciones (filtros, marcar leídas, limpiar),
+  avisos emergentes, sonido y notificaciones del navegador opcionales. Avisa de dispositivos
+  offline/online, anomalías eléctricas, eventos de red, latencia alta, mensajes perdidos y caídas
+  del puente / simulador / Firestore. Se agrupan (×N) para no inundar y se guardan en `localStorage`.
+- **Historial por dispositivo:** rangos 15 min – 7 días o personalizado, disponibilidad, energía
+  (kWh), estadísticas, gráficos con los cortes sombreados, períodos sin datos, eventos y alertas,
+  tabla paginada y exportación a CSV.
+
+## Configuración de Firestore
+
+1. **Índices compuestos** (necesarios para el historial): están en `firestore.indexes.json`.
+   ```bash
+   npx firebase-tools deploy --only firestore:indexes --project iot-energy-monitor-cb06d
+   ```
+   También se pueden crear desde el link que muestra el dashboard si falta alguno.
+2. **Reglas:** el dashboard lee `telemetria`, `dispositivos`, `alertas`, `eventos` y `sistema`.
+   Si alguna colección no es legible, el dashboard sigue funcionando pero sin esa parte.
+
+Umbrales y tiempos se ajustan en `src/config.js`.
+
+## Estructura
+
+```
+src/
+  App.js                  orquesta datos, estado y notificaciones
+  config.js               umbrales, tiempos y límites
+  firebase.js             inicialización de Firebase
+  hooks/                  useFirestore, useHistorial, useNotificaciones, useAhora
+  utils/                  lógica pura y testeada (telemetría, dispositivos, notificaciones)
+  components/             VistaEnVivo, HistorialDispositivo, PanelLatencia, Notificaciones, Indicadores
+```
+
+## Tests
+
+```bash
+npm test
+```
+
+---
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
